@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------------------------------------------------
+ * StyleSeed Toss - Gastronomia
+ * Paleta gastronômica: bordô (brand), âmbar (acento), cremes neutros
+ * ----------------------------------------------------------------------- */
+@layer base {
+  :root {
+    --radius: 0.75rem;
+
+    /* Neutros (creme) */
+    --background: 36 35% 98%;
+    --foreground: 24 14% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 14% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 14% 12%;
+    --muted: 30 24% 93%;
+    --muted-foreground: 25 10% 42%;
+    --border: 28 20% 87%;
+    --input: 28 20% 87%;
+    --ring: 345 62% 30%;
+    --shadow-color: 24 40% 20%;
+
+    /* Brand: bordô / wine */
+    --brand: 345 62% 30%;
+    --brand-foreground: 36 35% 98%;
+    --brand-soft: 345 55% 94%;
+
+    /* Acento: âmbar quente */
+    --accent: 32 92% 52%;
+    --accent-foreground: 24 14% 12%;
+
+    /* Semânticas */
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 146 55% 38%;
+    --success-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 24 18% 8%;
+    --foreground: 36 30% 96%;
+    --card: 24 16% 11%;
+    --card-foreground: 36 30% 96%;
+    --popover: 24 16% 11%;
+    --popover-foreground: 36 30% 96%;
+    --muted: 24 10% 18%;
+    --muted-foreground: 30 12% 66%;
+    --border: 24 10% 20%;
+    --input: 24 10% 20%;
+    --ring: 345 68% 68%;
+    --shadow-color: 0 0% 0%;
+
+    --brand: 345 70% 62%;
+    --brand-foreground: 24 18% 8%;
+    --brand-soft: 345 30% 18%;
+
+    --accent: 32 92% 58%;
+    --accent-foreground: 24 18% 8%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 146 50% 52%;
+    --success-foreground: 24 18% 8%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background-color: hsl(var(--brand) / 0.18);
+    color: hsl(var(--foreground));
+  }
+
+  /* Tipografia display nas headings principais */
+  .font-display {
+    font-feature-settings: "ss01", "dlig";
+    letter-spacing: -0.015em;
+  }
+}
+
+@layer components {
+  /* Card base com sombra sutil (StyleSeed Toss) */
+  .ss-card {
+    @apply rounded-2xl border border-border bg-card text-card-foreground shadow-soft;
+  }
+
+  /* Focus ring consistente */
+  .ss-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Gradient hero suave gastronômico */
+  .ss-hero-gradient {
+    background:
+      radial-gradient(
+        1200px 600px at 15% -10%,
+        hsl(var(--brand) / 0.12) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        800px 400px at 95% 10%,
+        hsl(var(--accent) / 0.12) 0%,
+        transparent 55%
+      );
+  }
+
+  /* Gradiente hero mais rico (home) */
+  .ss-hero-gradient-strong {
+    background:
+      radial-gradient(
+        1400px 720px at 10% -15%,
+        hsl(var(--brand) / 0.22) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 520px at 100% 0%,
+        hsl(var(--accent) / 0.20) 0%,
+        transparent 55%
+      ),
+      linear-gradient(
+        180deg,
+        hsl(var(--background)) 0%,
+        hsl(var(--muted) / 0.6) 100%
+      );
+  }
+
+  /* Anel sutil para cards premium */
+  .ss-ring {
+    @apply ring-1 ring-border/70;
+  }
+
+  /* Divider decorativo */
+  .ss-divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+
+  /* Skeleton loader com shimmer */
+  .ss-skeleton {
+    @apply relative overflow-hidden rounded-lg bg-muted;
+  }
+  .ss-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--card) / 0.6),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar suave */
+  .ss-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .ss-scroll::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground/30;
+  }
+  .ss-scroll::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Gradiente de texto brand */
+  .ss-text-gradient {
+    background: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--accent)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-04-20T18:18:56.513Z",
+  "entries": [
+    "audit-skills",
+    "docs",
+    "rayden-use",
+    "security/aws-compliance-checker",
+    "security/aws-iam-best-practices",
+    "security/aws-secrets-rotation",
+    "security/aws-security-audit",
+    "ui-a11y",
+    "ui-component",
+    "ui-page",
+    "ui-pattern",
+    "ui-review",
+    "ui-setup",
+    "ui-tokens",
+    "ux-audit",
+    "ux-copy",
+    "ux-feedback",
+    "ux-flow",
+    "uxui-principles"
+  ]
+}
