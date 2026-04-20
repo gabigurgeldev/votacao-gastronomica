@@ -29,7 +29,7 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-border/80 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="container flex h-16 items-center justify-between gap-4 md:h-20">
+        <div className="container flex h-16 items-center md:h-20">
           <Link
             href="/"
             aria-label="Canaã Gastronomia"
@@ -37,12 +37,6 @@ export default async function HomePage() {
           >
             <SiteLogo height={40} priority className="md:hidden" />
             <SiteLogo height={48} priority className="hidden md:block" />
-          </Link>
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground/80 transition-all hover:border-brand/40 hover:bg-brand/5 hover:text-brand ss-focus sm:px-4 sm:py-2 sm:text-sm"
-          >
-            Área do jurado
           </Link>
         </div>
       </header>
@@ -115,15 +109,24 @@ export default async function HomePage() {
       </section>
 
       <footer className="border-t border-border bg-muted/40">
-        <div className="container flex flex-col items-center gap-5 py-8 text-center text-sm text-muted-foreground sm:flex-row sm:justify-between sm:text-left">
+        <div className="container flex flex-col items-center gap-6 py-10 text-center text-sm text-muted-foreground">
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
             <SiteLogo height={36} />
-            <p>© {new Date().getFullYear()} Canaã Gastronomia — Canaã dos Carajás</p>
+            <p className="max-w-md">
+              © {new Date().getFullYear()} Canaã Gastronomia — Canaã dos Carajás
+            </p>
           </div>
+          <p className="max-w-lg text-xs leading-relaxed sm:text-sm">
+            Todos os direitos reservados —{" "}
+            <span className="text-foreground/90">
+              Gestalt Marketing, Tecnologia e Educação
+            </span>
+            .
+          </p>
           <Link
             href="/admin/login"
             aria-label="Área administrativa"
-            className="text-xs text-muted-foreground/60 underline-offset-4 opacity-40 transition-opacity hover:text-foreground hover:opacity-100 hover:underline focus-visible:opacity-100 ss-focus"
+            className="text-xs text-muted-foreground/60 underline-offset-4 opacity-50 transition-opacity hover:text-foreground hover:opacity-100 hover:underline focus-visible:opacity-100 ss-focus"
           >
             Área administrativa
           </Link>
