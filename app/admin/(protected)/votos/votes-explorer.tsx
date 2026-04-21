@@ -2,7 +2,19 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "@/components/ui/toaster";
+import { deleteVote } from "./actions";
 
 interface VoteRow {
   id: string;
@@ -28,6 +40,24 @@ export function VotesExplorer({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [confirmId, setConfirmId] = React.useState<string | null>(null);
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
+
+  const voteToDelete = votes.find((v) => v.id === confirmId) ?? null;
+
+  const handleDeleteVote = async () => {
+    if (!confirmId) return;
+    setPendingId(confirmId);
+    const res = await deleteVote(confirmId);
+    setPendingId(null);
+    setConfirmId(null);
+    if (!res.ok) {
+      toast({ title: "Não foi possível excluir", description: res.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Avaliação excluída", variant: "success" });
+    router.refresh();
+  };
 
   const setParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -88,14 +118,17 @@ export function VotesExplorer({
                 ? v.voters?.name ?? "Anônimo"
                 : juryNames[v.jury_user_id ?? ""] ?? "Jurado";
             return (
-              <div key={v.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <div
+                key={v.id}
+                className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4"
+              >
                 <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-muted px-2 py-2">
                   <span className="font-display text-2xl leading-none">
                     {avg.toFixed(1)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">média</span>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <Badge
                       variant={v.voter_type === "jury" ? "default" : "secondary"}
@@ -125,11 +158,61 @@ export function VotesExplorer({
                     ))}
                   </div>
                 </div>
+                <div className="flex shrink-0 justify-end sm:items-start">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Excluir avaliação"
+                    onClick={() => setConfirmId(v.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             );
           })}
         </div>
       )}
+
+      <Dialog open={confirmId !== null} onOpenChange={(o) => !o && setConfirmId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir avaliação?</DialogTitle>
+            <DialogDescription>
+              {voteToDelete ? (
+                <>
+                  Esta avaliação de{" "}
+                  <strong>{voteToDelete.dishes?.name ?? "prato"}</strong> será removida
+                  permanentemente, incluindo todas as notas por critério. Esta ação não pode ser
+                  desfeita.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmId(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pendingId !== null}
+              onClick={handleDeleteVote}
+            >
+              {pendingId ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Excluindo…
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
