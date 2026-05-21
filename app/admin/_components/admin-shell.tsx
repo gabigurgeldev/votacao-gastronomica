@@ -5,29 +5,25 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  UtensilsCrossed,
-  ListChecks,
-  Users,
-  Vote,
-  UserCog,
+  Utensils,
+  Building2,
   LogOut,
   Menu,
   X,
   ChevronLeft,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { SiteLogo } from "@/components/site-logo";
+import { SiteSettingsDialog } from "../(protected)/_components/site-settings-dialog";
 
 const NAV = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/pratos", label: "Pratos", icon: UtensilsCrossed },
-  { href: "/admin/categorias", label: "Categorias", icon: ListChecks },
-  { href: "/admin/votantes", label: "Votantes", icon: Users },
-  { href: "/admin/votos", label: "Avaliações", icon: Vote },
-  { href: "/admin/jurados", label: "Jurados", icon: UserCog },
+  { href: "/admin/nichos", label: "Nichos", icon: Utensils },
+  { href: "/admin/empresas", label: "Empresas", icon: Building2 },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = "admin-sidebar-collapsed";
@@ -53,6 +49,7 @@ export function AdminShell({
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   React.useEffect(() => {
     try {
@@ -113,16 +110,27 @@ export function AdminShell({
           >
             <Menu className="h-5 w-5" />
           </button>
-          <SiteLogo height={30} className="max-h-8 sm:hidden" />
-          <SiteLogo height={32} className="hidden max-h-9 sm:block" />
+          <SiteLogo slot="site" height={30} className="max-h-8 sm:hidden" />
+          <SiteLogo slot="site" height={32} className="hidden max-h-9 sm:block" />
         </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
-          {initials}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground ss-focus"
+            aria-label="Identidade visual"
+            title="Identidade visual"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
+            {initials}
+          </div>
         </div>
       </header>
 
       <div className="flex min-w-0">
-        {/* Sidebar desktop — recolhível */}
+        {/* Sidebar desktop */}
         <aside
           className={cn(
             "sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-background transition-[width] duration-300 ease-in-out md:flex",
@@ -135,6 +143,7 @@ export function AdminShell({
             userEmail={userEmail}
             initials={initials}
             onLogout={handleLogout}
+            onOpenSettings={() => setSettingsOpen(true)}
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setCollapsed(!sidebarCollapsed)}
             variant="desktop"
@@ -157,7 +166,7 @@ export function AdminShell({
             />
             <aside className="absolute left-0 top-0 flex h-full w-[min(20rem,calc(100vw-2.5rem))] max-w-[85vw] flex-col border-r border-border bg-background shadow-elevated animate-slide-in-left">
               <div className="flex items-center justify-between border-b border-border p-3">
-                <SiteLogo height={32} />
+                <SiteLogo slot="site" height={32} />
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
@@ -173,6 +182,10 @@ export function AdminShell({
                 userEmail={userEmail}
                 initials={initials}
                 onLogout={handleLogout}
+                onOpenSettings={() => {
+                  setSettingsOpen(true);
+                  setMobileMenuOpen(false);
+                }}
                 onNavigate={() => setMobileMenuOpen(false)}
                 hideHeader
                 variant="mobile"
@@ -185,6 +198,8 @@ export function AdminShell({
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
+
+      <SiteSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }
@@ -197,6 +212,7 @@ function SidebarInner({
   userEmail,
   initials,
   onLogout,
+  onOpenSettings,
   onNavigate,
   hideHeader,
   collapsed,
@@ -208,6 +224,7 @@ function SidebarInner({
   userEmail: string;
   initials: string;
   onLogout: () => void;
+  onOpenSettings: () => void;
   onNavigate?: () => void;
   hideHeader?: boolean;
   collapsed?: boolean;
@@ -234,14 +251,14 @@ function SidebarInner({
             )}
           >
             {isCollapsed ? (
-              <SiteLogo height={36} />
+              <SiteLogo slot="site" height={36} />
             ) : (
               <>
-                <SiteLogo height={36} />
+                <SiteLogo slot="site" height={36} />
                 <div className="min-w-0 leading-tight">
                   <p className="font-display text-lg tracking-tight">Admin</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    Canaã Gastronomia
+                    Painel administrativo
                   </p>
                 </div>
               </>
@@ -303,6 +320,19 @@ function SidebarInner({
             </Link>
           );
         })}
+
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          title="Identidade visual"
+          className={cn(
+            "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ss-focus",
+            isCollapsed && "justify-center px-2",
+          )}
+        >
+          <Settings className="h-4 w-4 shrink-0" />
+          <span className={cn(isCollapsed && "sr-only")}>Identidade visual</span>
+        </button>
       </nav>
 
       <div

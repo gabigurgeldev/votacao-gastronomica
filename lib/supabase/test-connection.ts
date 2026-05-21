@@ -5,40 +5,34 @@ import { createSupabaseServerClient } from "./server";
 export async function testSupabaseConnection() {
   try {
     const supabase = createSupabaseServerClient();
-    
-    // Testa conexão básica
-    const { data: dishes, error: dishesError } = await supabase
-      .from("dishes")
-      .select("count")
-      .limit(1);
-    
-    if (dishesError) {
+
+    const { error: nichesError } = await supabase
+      .from("niches")
+      .select("id", { count: "exact", head: true });
+
+    if (nichesError) {
       return {
         ok: false,
-        error: `Erro na tabela dishes: ${dishesError.message}`,
-        code: dishesError.code,
+        error: `Erro na tabela niches: ${nichesError.message}`,
+        code: nichesError.code,
       };
     }
-    
-    // Testa conexão com categorias
-    const { data: categories, error: catError } = await supabase
-      .from("categories")
-      .select("count")
-      .limit(1);
-    
-    if (catError) {
+
+    const { error: companiesError } = await supabase
+      .from("companies")
+      .select("id", { count: "exact", head: true });
+
+    if (companiesError) {
       return {
         ok: false,
-        error: `Erro na tabela categories: ${catError.message}`,
-        code: catError.code,
+        error: `Erro na tabela companies: ${companiesError.message}`,
+        code: companiesError.code,
       };
     }
-    
+
     return {
       ok: true,
       message: "Conexão com Supabase OK!",
-      dishes: dishes?.length ?? 0,
-      categories: categories?.length ?? 0,
     };
   } catch (err) {
     return {

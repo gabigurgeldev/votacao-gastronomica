@@ -146,6 +146,24 @@
     @apply h-px w-full bg-gradient-to-r from-transparent via-border to-transparent;
   }
 
+  /* Orbes decorativos do hero */
+  .ss-hero-orb {
+    border-radius: 9999px;
+    filter: blur(48px);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  /* Cards bento do painel direito do hero */
+  .ss-bento-card {
+    @apply rounded-2xl border border-border/50 shadow-soft backdrop-blur-md;
+  }
+
+  /* Barra de estatísticas do hero */
+  .ss-hero-stats {
+    @apply rounded-2xl border border-brand/10 bg-brand/[0.04] p-5 shadow-soft backdrop-blur-md sm:px-8;
+  }
+
   /* Skeleton loader com shimmer */
   .ss-skeleton {
     @apply relative overflow-hidden rounded-lg bg-muted;

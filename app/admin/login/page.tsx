@@ -24,14 +24,14 @@ export default function AdminLoginPage() {
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-elevated ring-1 ring-border/70 sm:p-10">
             <div className="mb-8 flex flex-col items-center gap-4 text-center">
-              <SiteLogo height={60} priority className="hidden sm:block" />
-              <SiteLogo height={48} priority className="sm:hidden" />
+              <SiteLogo slot="site" height={60} priority className="hidden sm:block" />
+              <SiteLogo slot="site" height={48} priority className="sm:hidden" />
               <div>
                 <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
-                  Entrar no sistema
+                  Entrar como administrador
                 </h1>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  Administradores e jurados acessam por aqui.
+                  Acesso restrito ao painel.
                 </p>
               </div>
             </div>

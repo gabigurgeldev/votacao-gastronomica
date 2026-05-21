@@ -1,20 +1,15 @@
-import { Users, Vote as VoteIcon, UtensilsCrossed, Trophy } from "lucide-react";
+import Image from "next/image";
+import {
+  Users,
+  Vote as VoteIcon,
+  Utensils,
+  Trophy,
+  Building2,
+} from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PageHeader } from "../../_components/page-header";
 import { KpiCard } from "../../_components/kpi-card";
-import { CategoryAveragesChart } from "./category-chart";
-import { KpiVoteCards } from "./kpi-vote-cards";
-import { VoteMetricsTabs } from "./vote-metrics-tabs";
-import { DishCategoryTable } from "./dish-category-table";
-import { DishCategoryComparisonChart } from "./dish-category-comparison-chart";
-import { formatAvg } from "@/lib/utils";
-import type {
-  DishCategoryAvgRow,
-  DishRankingRow,
-  DishCategoryDetailedRow,
-  DishRankingByTypeRow,
-  VotesByTypeRow,
-} from "@/lib/supabase/types";
+import type { NicheResultRow } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -22,160 +17,171 @@ export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
 
   const [
-    { count: votersCount },
-    { count: dishesCount },
+    { count: nichesCount },
+    { count: companiesCount },
     { count: votesCount },
-    { data: rankingRows },
-    { data: categoryAvgRows },
-    { data: votesByType },
-    { data: categoryDetailedRows },
-    { data: rankingByTypeRows },
+    { data: results },
   ] = await Promise.all([
-    supabase.from("voters").select("*", { count: "exact", head: true }),
     supabase
-      .from("dishes")
+      .from("niches")
+      .select("*", { count: "exact", head: true })
+      .eq("active", true),
+    supabase
+      .from("companies")
       .select("*", { count: "exact", head: true })
       .eq("active", true),
     supabase.from("votes").select("*", { count: "exact", head: true }),
-    supabase
-      .from("v_dish_ranking")
-      .select("*")
-      .order("avg_score_overall", { ascending: false, nullsFirst: false }),
-    supabase.from("v_dish_category_averages").select("*"),
-    // Novas views de métricas
-    supabase.from("v_votes_by_type").select("*"),
-    supabase.from("v_dish_category_detailed").select("*"),
-    supabase.from("v_dish_ranking_by_type").select("*"),
+    supabase.from("v_niche_company_results").select("*"),
   ]);
 
-  const ranking = (rankingRows ?? []) as DishRankingRow[];
-  const topDish = ranking.find((r) => r.avg_score_overall !== null) ?? null;
+  const rows = (results ?? []) as NicheResultRow[];
+  const distinctVoters = await supabase
+    .from("votes")
+    .select("voter_user_id", { count: "exact", head: true });
 
-  // Processar dados de avaliações por tipo
-  const votesByTypeData = (votesByType ?? []) as VotesByTypeRow[];
-  const publicData = votesByTypeData.find((v) => v.voter_type === "public");
-  const juryData = votesByTypeData.find((v) => v.voter_type === "jury");
+  // Agrupa por nicho
+  const niches = new Map<string, { niche_name: string; companies: NicheResultRow[] }>();
+  for (const r of rows) {
+    if (!niches.has(r.niche_id)) {
+      niches.set(r.niche_id, { niche_name: r.niche_name, companies: [] });
+    }
+    if (r.company_id) {
+      niches.get(r.niche_id)!.companies.push(r);
+    }
+  }
 
-  // Calcular médias gerais por tipo
-  const categoryDetailedData = (categoryDetailedRows ?? []) as DishCategoryDetailedRow[];
-
-  const validPublicScores = categoryDetailedData
-    .map((r) => r.avg_score_public)
-    .filter((s): s is number => s != null);
-  const avgPublic =
-    validPublicScores.length > 0
-      ? validPublicScores.reduce((a, b) => a + b, 0) / validPublicScores.length
-      : null;
-
-  const validJuryScores = categoryDetailedData
-    .map((r) => r.avg_score_jury)
-    .filter((s): s is number => s != null);
-  const avgJury =
-    validJuryScores.length > 0
-      ? validJuryScores.reduce((a, b) => a + b, 0) / validJuryScores.length
-      : null;
-
-  // Separar ranking por tipo
-  const rankingByTypeData = (rankingByTypeRows ?? []) as DishRankingByTypeRow[];
-  const publicRanking = rankingByTypeData.filter((r) => r.voter_type === "public");
-  const juryRanking = rankingByTypeData.filter((r) => r.voter_type === "jury");
+  // Top empresa global
+  const topCompany = [...rows]
+    .filter((r) => r.company_id && r.total_votes > 0)
+    .sort((a, b) => b.total_votes - a.total_votes)[0];
 
   return (
     <>
       <PageHeader
         eyebrow="Visão geral"
         title="Dashboard"
-        description="Avaliações (5 a 10), ranking dos pratos e médias por categoria."
+        description="Resumo dos votos por nicho e ranking das empresas."
       />
 
-      {/* Resumo geral */}
-      <section aria-labelledby="resumo-geral" className="space-y-4">
-        <SectionTitle id="resumo-geral">Resumo geral</SectionTitle>
+      <section className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            label="Avaliações totais"
+            label="Votos totais"
             value={String(votesCount ?? 0)}
             icon={<VoteIcon className="h-5 w-5" />}
           />
           <KpiCard
-            label="Votantes cadastrados"
-            value={String(votersCount ?? 0)}
+            label="Votantes únicos"
+            value={String(distinctVoters.count ?? 0)}
             icon={<Users className="h-5 w-5" />}
           />
           <KpiCard
-            label="Pratos ativos"
-            value={String(dishesCount ?? 0)}
-            icon={<UtensilsCrossed className="h-5 w-5" />}
+            label="Nichos ativos"
+            value={String(nichesCount ?? 0)}
+            icon={<Utensils className="h-5 w-5" />}
             accent="accent"
           />
           <KpiCard
-            label="Melhor média"
-            value={topDish ? formatAvg(topDish.avg_score_overall) : "—"}
-            sublabel={topDish?.dish_name ?? "Sem avaliações ainda"}
+            label="Empresas ativas"
+            value={String(companiesCount ?? 0)}
+            icon={<Building2 className="h-5 w-5" />}
+          />
+        </div>
+
+        {topCompany && (
+          <KpiCard
+            label="Líder geral"
+            value={String(topCompany.total_votes)}
+            sublabel={`${topCompany.company_name} — ${topCompany.niche_name}`}
             icon={<Trophy className="h-5 w-5" />}
             accent="success"
           />
-        </div>
+        )}
       </section>
 
-      {/* Público x Jurados */}
-      <section aria-labelledby="por-tipo" className="mt-10 space-y-4">
-        <SectionTitle id="por-tipo">Público x Jurados</SectionTitle>
-        <KpiVoteCards
-          votesByType={votesByTypeData}
-          avgPublic={avgPublic}
-          avgJury={avgJury}
-        />
-      </section>
+      <section className="mt-10 space-y-6">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Ranking por nicho
+        </h2>
 
-      {/* Ranking */}
-      <section aria-labelledby="ranking" className="mt-10 space-y-4">
-        <SectionTitle id="ranking">Ranking dos pratos</SectionTitle>
-        <VoteMetricsTabs
-          combinedRanking={ranking}
-          publicRanking={publicRanking}
-          juryRanking={juryRanking}
-        />
-      </section>
-
-      {/* Detalhamento */}
-      <section aria-labelledby="detalhamento" className="mt-10 space-y-4">
-        <SectionTitle id="detalhamento">Detalhamento por categoria</SectionTitle>
-        <DishCategoryTable rows={categoryDetailedData} />
-
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DishCategoryComparisonChart rows={categoryDetailedData} />
-
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-            <h2 className="font-display text-xl tracking-tight">
-              Médias por categoria
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Nota média por critério avaliativo (todos os pratos).
+        {niches.size === 0 ? (
+          <div className="ss-card flex flex-col items-center gap-3 p-12 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <Utensils className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="font-display text-lg">Nenhum nicho cadastrado</p>
+            <p className="text-sm text-muted-foreground">
+              Crie nichos e empresas para começar a receber votos.
             </p>
-            <CategoryAveragesChart
-              rows={(categoryAvgRows ?? []) as DishCategoryAvgRow[]}
-            />
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            {[...niches.entries()].map(([nicheId, { niche_name, companies }]) => {
+              const sorted = [...companies].sort(
+                (a, b) => b.total_votes - a.total_votes,
+              );
+              const max = Math.max(1, ...sorted.map((c) => c.total_votes));
+              return (
+                <div key={nicheId} className="ss-card overflow-hidden">
+                  <div className="border-b border-border/70 bg-muted/30 px-5 py-3">
+                    <h3 className="font-display text-lg">{niche_name}</h3>
+                  </div>
+                  {sorted.length === 0 ? (
+                    <div className="p-5 text-sm text-muted-foreground">
+                      Nenhuma empresa cadastrada.
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-border/70">
+                      {sorted.map((c, i) => (
+                        <li
+                          key={c.company_id ?? i}
+                          className="flex items-center gap-3 px-5 py-3"
+                        >
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
+                            {i + 1}
+                          </span>
+                          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-muted">
+                            {c.logo_url ? (
+                              <Image
+                                src={c.logo_url}
+                                alt={c.company_name ?? ""}
+                                fill
+                                sizes="36px"
+                                className="object-contain p-1"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <Building2 className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {c.company_name ?? "—"}
+                            </p>
+                            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-brand"
+                                style={{
+                                  width: `${Math.round((c.total_votes / max) * 100)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <span className="shrink-0 text-sm font-semibold tabular-nums">
+                            {c.total_votes}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </>
-  );
-}
-
-function SectionTitle({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <h2
-      id={id}
-      className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-    >
-      {children}
-    </h2>
   );
 }

@@ -49,17 +49,10 @@ export function LoginForm() {
 
       const role = profile?.role || data.user?.app_metadata?.role;
 
-      let target: string | null = null;
-      if (role === "admin") {
-        target = "/admin/dashboard";
-      } else if (role === "jurado") {
-        target = "/jurado/dashboard";
-      }
-
-      if (!target) {
+      if (role !== "admin") {
         await supabase.auth.signOut();
         const msg =
-          "Seu usuário não tem permissão para entrar nesta área. Contate um administrador.";
+          "Esta área é restrita a administradores. Para votar, use a página inicial.";
         setErrorMsg(msg);
         toast({
           title: "Acesso restrito",
@@ -70,7 +63,7 @@ export function LoginForm() {
         return;
       }
 
-      window.location.assign(target);
+      window.location.assign("/admin/dashboard");
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : "Erro ao conectar com o servidor.";

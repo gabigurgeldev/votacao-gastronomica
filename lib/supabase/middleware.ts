@@ -1,12 +1,11 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { UserRole } from "./types";
 
 /**
  * Middleware Supabase: atualiza sessão e aplica guards por rota.
  * - /admin/*       → requer role=admin
- * - /jurado/*      → requer role=jurado
- * - /admin/login   → público (formulário de entrada)
+ * - /admin/login   → público
+ * - / (home)       → livre (votantes autenticam via modal inline)
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -34,20 +33,18 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  
-  // Buscar role da tabela profiles (mais confiável)
-  let role: UserRole | null = null;
+
+  let role: string | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
-    role = (profile?.role as UserRole) || (user?.app_metadata?.role as UserRole) || null;
+      .maybeSingle();
+    role = (profile?.role as string) || (user?.app_metadata?.role as string) || null;
   }
 
   const isAdminRoute = pathname.startsWith("/admin") && pathname !== "/admin/login";
-  const isJuryRoute = pathname.startsWith("/jurado");
 
   if (isAdminRoute && role !== "admin") {
     const url = request.nextUrl.clone();
@@ -55,16 +52,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isJuryRoute && role !== "jurado") {
+  if (pathname === "/admin/login" && role === "admin") {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
-    return NextResponse.redirect(url);
-  }
-
-  // Se já está logado e tenta acessar /admin/login, redireciona pelo role
-  if (pathname === "/admin/login" && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = role === "admin" ? "/admin/dashboard" : "/jurado/dashboard";
+    url.pathname = "/admin/dashboard";
     return NextResponse.redirect(url);
   }
 
